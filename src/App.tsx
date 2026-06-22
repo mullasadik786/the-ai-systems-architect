@@ -2,6 +2,34 @@ import React, { useState } from 'react';
 import IntegrationHub from './components/IntegrationHub';
 import MemoryHub from './components/MemoryHub';
 import SelfCorrectionConsole from './components/SelfCorrectionConsole';
+import WorkflowAutomationCenter from './components/WorkflowAutomationCenter';
+import SystemsTestingSuite from './components/SystemsTestingSuite';
+import TaskDecomposer from './components/TaskDecomposer';
+
+// Import and Register Chart.js Components
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Line, Doughnut } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface Message {
   id: number;
@@ -9,137 +37,186 @@ interface Message {
   sender: 'user' | 'ai';
 }
 
-function App() {
-  const [messages, setMessages] = useState<Message[]>([
-    { id: 1, text: "Hello! I am your AI Copilot Assistant. How can I help you optimize your architecture today?", sender: 'ai' }
-  ]);
-  const [input, setInput] = useState('');
+interface AgentNode {
+  id: string;
+  name: string;
+  role: string;
+  type: string;
+  temp: number;
+}
 
+function App() {
+  // Theme State
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  // Custom Nodes Management State
+  const [nodes, setNodes] = useState<AgentNode[]>([
+    { id: '1', name: 'Input Intake', role: 'Requirement ingestion point', type: 'Intake', temp: 0.5 },
+    { id: '2', name: 'Content Draftsman', role: 'Creative Copywriter', type: 'Agent', temp: 0.7 },
+    { id: '3', name: 'Technical Auditor', role: 'Compliance & Risk Evaluator', type: 'Agent', temp: 0.2 },
+    { id: '4', name: 'Editorial Refiner', role: 'Senior Polishing Editor', type: 'Agent', temp: 0.5 }
+  ]);
+
+  const [selectedNodeId, setSelectedNodeId] = useState<string>('1');
+  const [globalTemp, setGlobalTemp] = useState<number>(0.5);
+
+  // Form Inputs for New Agents
+  const [newNodeName, setNewNodeName] = useState('');
+  const [newNodeRole, setNewNodeRole] = useState('');
+  const [newNodeCategory, setNewNodeCategory] = useState('Strategic Core Agent (AI Agent)');
+  const [newNodePrompt, setNewNodePrompt] = useState('');
+
+  // Chat Interface State
+  const [messages, setMessages] = useState<Message[]>([
+    { id: 1, text: "Welcome to the Multi-Agent Playground! I am your AI Orchestration Copilot. Describe your operational goal or system setup.", sender: 'ai' }
+  ]);
+  const [chatInput, setChatInput] = useState('');
+
+  // Form Submission Handler for Creating New Agents
+  const handleCreateAgent = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNodeName.trim()) return;
+    const newAgent: AgentNode = {
+      id: Date.now().toString(),
+      name: newNodeName,
+      role: newNodeRole || 'Custom agent configuration',
+      type: newNodeCategory.includes('AI Agent') ? 'Agent' : 'Utility',
+      temp: globalTemp
+    };
+    setNodes([...nodes, newAgent]);
+    setSelectedNodeId(newAgent.id);
+    setNewNodeName('');
+    setNewNodeRole('');
+    setNewNodePrompt('');
+    alert(`Successfully deployed [${newAgent.name}] node configuration to workspace.`);
+  };
+
+  // Chat Input Handler
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!chatInput.trim()) return;
 
-    const userMessage: Message = { id: Date.now(), text: input, sender: 'user' };
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
+    const userMsg: Message = { id: Date.now(), text: chatInput, sender: 'user' };
+    setMessages(prev => [...prev, userMsg]);
+    setChatInput('');
 
-    // AI Simulated Response
     setTimeout(() => {
-      const aiMessage: Message = {
+      const aiMsg: Message = {
         id: Date.now() + 1,
-        text: `I have analyzed your request. The system architecture has been optimized and sync configurations updated.`,
+        text: `Orchestrator feedback: Request mapped successfully to topology schema. Evaluating graph token sequence.`,
         sender: 'ai'
       };
-      setMessages(prev => [...prev, aiMessage]);
+      setMessages(prev => [...prev, aiMsg]);
     }, 1000);
   };
 
+  // Global Temperature Tuning Trigger
+  const handleOptimizeTemperature = () => {
+    setGlobalTemp(0.2);
+    setNodes(prev => prev.map(node => ({ ...node, temp: 0.2 })));
+    alert("System optimization complete. All specialized expert nodes set to minimum variance (0.2°C) to neutralize model hallucinations.");
+  };
+
+  // Get currently selected node object info
+  const activeNode = nodes.find(n => n.id === selectedNodeId) || nodes[0];
+
+  // --- Chart.js Configurations ---
+  const lineChartData = {
+    labels: ['10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM'],
+    datasets: [
+      {
+        label: 'API Request Load / min',
+        data:,
+        borderColor: 'rgb(59, 130, 246)',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        tension: 0.3,
+        fill: true,
+      },
+    ],
+  };
+
+  const doughnutChartData = {
+    labels: ['Success Rate', 'Idle Buffer', 'Error Anomalies'],
+    datasets: [
+      {
+        data: globalTemp === 0.2 ? [98, 1, 1] :, // Adjusts on temperature optimize
+        backgroundColor: ['#10b981', '#475569', '#ef4444'],
+        borderWidth: 0,
+      },
+    ],
+  };
+
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans p-6">
-      {/* Top Header */}
-      <header className="max-w-7xl mx-auto mb-8 border-b border-slate-800 pb-4 flex justify-between items-center">
+    <div className={`min-h-screen font-sans p-6 transition-colors duration-300 ${theme === 'dark' ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+      
+      {/* Top Header Grid Area */}
+      <header className={`max-w-7xl mx-auto mb-8 border-b pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${theme === 'dark' ? 'border-slate-800' : 'border-slate-200'}`}>
         <div>
-          <h1 className="text-3xl font-extrabold text-blue-400 tracking-tight">THE AI SYSTEMS ARCHITECT</h1>
-          <p className="text-slate-400 text-sm mt-1">Advanced Serverless Orchestration Platform</p>
+          <h1 className="text-3xl font-extrabold text-blue-500 tracking-tight">THE AI SYSTEMS ARCHITECT</h1>
+          <p className={`${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'} text-sm mt-1`}>
+            Advanced orchestration workspace to design, prototype, and monitor autonomous multi-agent systems and cognitive swarms.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="h-3 w-3 bg-emerald-500 rounded-full animate-pulse"></span>
-          <span className="text-sm font-medium text-emerald-400">System Live (Render)</span>
+        <div className="flex items-center gap-4">
+          {/* Theme Toggles */}
+          <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
+            <button onClick={() => setTheme('light')} className={`px-3 py-1 text-xs font-semibold rounded ${theme === 'light' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>Light</button>
+            <button onClick={() => setTheme('dark')} className={`px-3 py-1 text-xs font-semibold rounded ${theme === 'dark' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>Dark</button>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-3 w-3 bg-emerald-500 rounded-full animate-pulse"></span>
+            <span className="text-sm font-medium text-emerald-500">System Live (Render)</span>
+          </div>
         </div>
       </header>
 
-      {/* Main Container Layout */}
+      {/* Main Structural Interface Content Body Layout */}
       <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Left Side: Existing Structural Hubs */}
+        {/* Left Double-Column Side Section */}
         <div className="lg:col-span-2 space-y-6">
-          <IntegrationHub />
-          <MemoryHub />
-          <SelfCorrectionConsole />
-        </div>
-
-        {/* Right Side: New Analytical & Interaction Features */}
-        <div className="space-y-6">
           
-          {/* 1. ANALYTICS DASHBOARD SECTION */}
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-5 shadow-lg">
-            <h2 className="text-xl font-bold text-blue-400 mb-4 flex items-center gap-2">
-              📊 Analytics Dashboard
-            </h2>
-            <div className="space-y-4">
-              {/* Progress Bar 1 */}
-              <div>
-                <div className="flex justify-between text-xs font-semibold mb-1">
-                  <span>AI Memory Utilization</span>
-                  <span className="text-amber-400">78%</span>
-                </div>
-                <div className="w-full bg-slate-700 h-3 rounded-full overflow-hidden">
-                  <div className="bg-amber-500 h-full rounded-full transition-all duration-500" style={{ width: '78%' }}></div>
-                </div>
-              </div>
-
-              {/* Progress Bar 2 */}
-              <div>
-                <div className="flex justify-between text-xs font-semibold mb-1">
-                  <span>API Request Efficiency</span>
-                  <span className="text-emerald-400">94%</span>
-                </div>
-                <div className="w-full bg-slate-700 h-3 rounded-full overflow-hidden">
-                  <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: '94%' }}></div>
-                </div>
-              </div>
-
-              {/* Progress Bar 3 */}
-              <div>
-                <div className="flex justify-between text-xs font-semibold mb-1">
-                  <span>Self-Correction Success Rate</span>
-                  <span className="text-blue-400">89%</span>
-                </div>
-                <div className="w-full bg-slate-700 h-3 rounded-full overflow-hidden">
-                  <div className="bg-blue-500 h-full rounded-full transition-all duration-500" style={{ width: '89%' }}></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 2. AI COPILOT CHAT BOX INTERFACE */}
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-5 shadow-lg flex flex-col h-[400px]">
-            <h2 className="text-xl font-bold text-blue-400 mb-3 flex items-center gap-2">
-              💬 AI Copilot Chat
-            </h2>
+          {/* Blueprint Layout Presets Panel Component Area */}
+          <div className={`${theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} border rounded-xl p-5 shadow-sm`}>
+            <h2 className="text-xl font-bold text-blue-500 mb-2">Enterprise Blueprints Library</h2>
+            <p className="text-xs text-slate-400 mb-4">Select an enterprise-grade system layout preset to instantly configure modern multi-agent topologies.</p>
             
-            {/* Scrollable Message Box */}
-            <div className="flex-1 overflow-y-auto space-y-3 pr-2 mb-4 scrollbar-thin scrollbar-thumb-slate-700">
-              {messages.map((msg) => (
-                <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] rounded-lg p-3 text-sm ${
-                    msg.sender === 'user' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-100'
-                  }`}>
-                    {msg.text}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-3 bg-slate-900 rounded-lg border border-slate-700 hover:border-blue-500 cursor-pointer transition-all">
+                <h4 className="text-sm font-bold text-slate-200">Sequential Content Refinement Pipeline</h4>
+                <p className="text-xs text-slate-400 mt-1">Linear expert swarm starting with a creative draft, reviewed by audit guardrails, and finalized by editors.</p>
+                <span className="inline-block bg-slate-800 text-blue-400 text-[10px] px-2 py-0.5 rounded mt-2 font-semibold">4 Nodes • 3 Integrations</span>
+              </div>
 
-            {/* Input Message Form */}
-            <form onSubmit={handleSendMessage} className="flex gap-2">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask architect assistant..."
-                className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
-              />
-              <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
-                Send
-              </button>
-            </form>
+              <div className="p-3 bg-slate-900 rounded-lg border border-slate-700 hover:border-blue-500 cursor-pointer transition-all">
+                <h4 className="text-sm font-bold text-slate-200">Strategic Venture Coordination (Parallel Swarm)</h4>
+                <p className="text-xs text-slate-400 mt-1">Parallel collective of discrete perspectives (Finance, Marketing, Security Risks) merged by an Integrator.</p>
+                <span className="inline-block bg-slate-800 text-blue-400 text-[10px] px-2 py-0.5 rounded mt-2 font-semibold">5 Nodes • 6 Integrations</span>
+              </div>
+            </div>
           </div>
 
-        </div>
-      </main>
-    </div>
-  );
-}
+          {/* Expert Node Composer Creator Input Form Section */}
+          <div className={`${theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'} border rounded-xl p-5 shadow-sm`}>
+            <h3 className="text-lg font-bold text-blue-500 mb-3">Synthesize Custom Swarm Network Node</h3>
+            <form onSubmit={handleCreateAgent} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Node Name</label>
+                <input 
+                  type="text" 
+                  value={newNodeName} 
+                  onChange={(e) => setNewNodeName(e.target.value)}
+                  placeholder="e.g. Legal Counsel Specialist" 
+                  className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500" 
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Swarm Role Description</label>
+                <input 
+                  type="text" 
+                  value={newNodeRole} 
+                  onChange={(e) => setNewNodeRole(e.target.value)}
+                  placeholder="e.g. Contract validations and escrow logic" 
+                  className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500" 
+                />
 
-export default App;
