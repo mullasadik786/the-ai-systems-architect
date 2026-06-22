@@ -139,7 +139,7 @@ function App() {
     labels: ['Success Rate', 'Idle Buffer', 'Error Anomalies'],
     datasets: [
       {
-        data: globalTemp === 0.2 ? [98, 1, 1] :, // Adjusts on temperature optimize
+        data: globalTemp === 0.2 ? [98, 1, 1] :,
         backgroundColor: ['#10b981', '#475569', '#ef4444'],
         borderWidth: 0,
       },
@@ -219,4 +219,5 @@ function App() {
                   placeholder="e.g. Contract validations and escrow logic" 
                   className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500" 
                 />
-
+              </div>
+              <div className="md:col-span-2">
