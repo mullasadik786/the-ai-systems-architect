@@ -1,0 +1,6 @@
+{
+  "name": "The AI Systems Architect",
+  "description": "An interactive full-stack workspace and simulation playground to design, orchestrate, and validate custom multi-agent swarms, cognitive loops, and pipeline architectures powered by Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
