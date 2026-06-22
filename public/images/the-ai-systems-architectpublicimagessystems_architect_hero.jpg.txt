@@ -1,0 +1,4 @@
+const imageFile = new URL('../../src/assets/images/systems_architect_hero_1782070584857.jpg', import.meta.url).href;
+
+// UI లో:
+<img src={imageFile} alt="AI Architect" />
